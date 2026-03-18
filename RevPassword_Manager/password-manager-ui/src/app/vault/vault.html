@@ -1,0 +1,224 @@
+
+<div class="container mt-4">
+
+  <div class="glass">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+      <h3>Vault</h3>
+
+      <div class="d-flex gap-2">
+
+        <input class="form-control search-box"
+               placeholder="Search accounts..."
+               [(ngModel)]="searchText"
+               (input)="searchVault()">
+
+         <button class="btn"
+        [ngClass]="isFavoriteFilter ? 'btn-warning' : 'btn-outline-warning'"
+        (click)="toggleFavorites()">
+  <i class="fa fa-star"></i>
+  {{ isFavoriteFilter ? 'Show All' : 'Favorites' }}
+</button>    
+
+        <button class="btn btn-primary" (click)="exportAccounts()">
+            <i class="fa fa-upload"></i> Export Accounts
+        </button>
+
+        <button class="btn btn-success" (click)="fileInput.click()">
+    <i class="fa fa-download"></i> Import Accounts
+</button>
+
+<input 
+    #fileInput 
+    type="file" 
+    accept=".csv" 
+    hidden 
+    (change)="importAccounts($event)">
+
+      </div>
+
+    </div>
+
+    <!-- EDIT / ADD MODAL -->
+    <div *ngIf="showForm" class="modal-overlay">
+
+      <div class="modal-card">
+
+        <h4 class="text-center mb-3">
+          {{ editMode ? 'Edit Account' : 'Add Account' }}
+        </h4>
+
+        <input class="form-control mb-2"
+               placeholder="Account Name"
+               [(ngModel)]="form.accountName"
+               required>
+
+        <input class="form-control mb-2"
+               placeholder="Website"
+               [(ngModel)]="form.website"
+               required>
+
+        <input class="form-control mb-2"
+               placeholder="Username"
+               [(ngModel)]="form.username"
+               required>
+
+        <div class="input-group mb-1">
+            <input class="form-control"
+                   placeholder="Password"
+                   [(ngModel)]="form.password"
+                   (input)="updateStrength(form.password)"
+                   required>
+            <button *ngIf="!editMode" class="btn btn-outline-secondary" type="button" (click)="generatePassword()">
+                Generate
+            </button>
+            <button class="btn btn-outline-info" type="button" (click)="copyToClipboard()">
+                <i class="fa fa-copy"></i>
+            </button>
+        </div>
+
+        <!-- STRENGTH METER -->
+        <div class="strength-meter mb-2" *ngIf="form.password">
+            <div class="strength-bar" [style.width]="(strengthScore * 20) + '%'"
+                 [style.background]="strengthScore < 2 ? '#ef4444' : strengthScore < 4 ? '#f59e0b' : '#10b981'">
+            </div>
+            <small class="strength-text">{{strengthLabel}}</small>
+        </div>
+
+        <!-- GENERATOR OPTIONS -->
+        <div class="generator-options mb-3 small p-2 border rounded" *ngIf="!editMode">
+            <label class="d-block mb-1">Length: {{genOptions.length}}</label>
+            <input type="range" class="form-range" min="8" max="32" [(ngModel)]="genOptions.length">
+
+            <div class="d-flex flex-wrap gap-2 mt-2">
+                <label><input type="checkbox" [(ngModel)]="genOptions.uppercase"> ABC</label>
+                <label><input type="checkbox" [(ngModel)]="genOptions.lowercase"> abc</label>
+                <label><input type="checkbox" [(ngModel)]="genOptions.numbers"> 123</label>
+                <label><input type="checkbox" [(ngModel)]="genOptions.symbols"> !@#</label>
+                <label title="Exclude 0, O, 1, l, I"><input type="checkbox" [(ngModel)]="genOptions.excludeSimilar"> Exclude Similar</label>
+            </div>
+        </div>
+
+        <select class="form-control mb-2"
+                [(ngModel)]="form.category"
+                required>
+
+          <option value="">Select Category</option>
+          <option>Social</option>
+          <option>Banking</option>
+          <option>Work</option>
+          <option>Other</option>
+
+        </select>
+
+        <textarea class="form-control mb-2"
+                  placeholder="Notes"
+                  [(ngModel)]="form.notes">
+    </textarea>
+
+        <div class="fav-check mb-3">
+
+          <input type="checkbox"
+                 [(ngModel)]="form.favorite">
+
+          <label>⭐ Mark as Favorite</label>
+
+        </div>
+
+        <div class="d-flex gap-2">
+
+          <button class="btn btn-save w-50"
+                  (click)="save()"
+                  [disabled]="!form.accountName?.trim() || !form.website?.trim() || !form.username?.trim() || !form.password?.trim() || !form.category?.trim()">
+            Save
+          </button>
+
+          <button class="btn btn-cancel w-50"
+                  (click)="showForm=false">
+            Cancel
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+    <!-- GRID -->
+    <div class="row g-4">
+
+      <div class="col-lg-4 col-md-6 col-sm-12"
+           *ngFor="let v of filteredVaults; trackBy: trackById">
+
+        <div class="vault-card h-100 d-flex flex-column">
+
+          <!-- HEADER -->
+          <div class="vault-header">
+
+            <div class="vault-icon">
+              <i class="fa fa-globe"></i>
+            </div>
+
+            <div class="flex-grow-1 overflow-hidden">
+
+              <h5 class="text-truncate" [title]="v.accountName">{{v.accountName}}</h5>
+              <small class="text-truncate d-block" [title]="v.website">{{v.website}}</small>
+
+            </div>
+
+            <span *ngIf="v.favorite" class="fav-star">⭐</span>
+
+          </div>
+
+          <hr>
+
+          <!-- BODY -->
+          <div class="vault-body mb-3">
+            <p><strong>Username:</strong> {{v.username}}</p>
+
+            <p>
+              <strong>Password:</strong>
+
+              <span *ngIf="!v.show">••••••••</span>
+              <span *ngIf="v.show">{{v.password}}</span>
+
+              <i class="fa btn-icon"
+                 [ngClass]="v.show ? 'fa-eye-slash':'fa-eye'"
+                 (click)="togglePassword(v)">
+              </i>
+
+            </p>
+
+            <p>
+              <strong>Category:</strong>
+              <span class="badge">{{v.category}}</span>
+            </p>
+
+            <p class="notes  small text-white"><strong>Notes: </strong>{{v.notes || 'No notes available'}}</p>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="btn-row mt-auto d-flex gap-2">
+
+            <button class="btn btn-edit flex-grow-1"
+                    (click)="openEdit(v)">
+              Edit
+            </button>
+
+            <button class="btn btn-delete flex-grow-1"
+                    (click)="delete(v.id)">
+              Delete
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
