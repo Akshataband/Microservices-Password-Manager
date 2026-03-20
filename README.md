@@ -198,11 +198,4 @@ Individual Databases
 * Real-time breach detection
 * Kubernetes orchestration
 
----
 
-## 👩‍💻 Author
-
-**Akshata Hemraj Band**
-Full Stack Java Developer
-
----
