@@ -70,10 +70,6 @@ API Gateway
 
 ## User | Vault | Generator | Security | Notification
 
-```
-    ↓  
-```
-
 Individual Databases
 
 ---
